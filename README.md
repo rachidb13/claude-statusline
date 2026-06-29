@@ -28,18 +28,17 @@ Rate-limit segments only appear once Claude Code has made its first API response
 
 ## Install
 
-```bash
-git clone https://github.com/<you>/claude-statusline.git
-cd claude-statusline
-```
-
-**Windows (PowerShell):**
+**Windows (PowerShell)** — copy & paste all three lines:
 ```powershell
+git clone https://github.com/rachidb13/claude-statusline.git
+cd claude-statusline
 powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
-**macOS / Linux:**
+**macOS / Linux** — copy & paste all three lines:
 ```bash
+git clone https://github.com/rachidb13/claude-statusline.git
+cd claude-statusline
 chmod +x install.sh && ./install.sh
 ```
 
