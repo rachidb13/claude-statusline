@@ -1,5 +1,8 @@
 'use strict';
 const { execSync } = require('child_process');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
 const ESC = '\x1b[';
 const R   = '\x1b[0m';
@@ -15,6 +18,45 @@ const white  = s => `${ESC}97m${s}${R}`;
 
 function pctColor(pct, s) {
   return pct >= 90 ? red(s) : pct >= 70 ? yellow(s) : green(s);
+}
+
+// Is a pid still alive? true=alive, false=dead, null=unknown/no pid.
+// The plugin's state.json does not reliably flip status running->completed when a
+// job ends, so a bare status==='running' goes stale and the indicator sticks.
+// Verifying the recorded pid is the reliable "really running" signal.
+function pidAlive(pid) {
+  if (!pid || typeof pid !== 'number') return null;
+  try { process.kill(pid, 0); return true; }
+  catch (e) { return e.code === 'EPERM'; } // EPERM = exists but not ours; ESRCH = dead
+}
+
+// Running Codex background jobs (from the codex plugin's per-workspace state.json).
+// Fast, best-effort, never throws — shows nothing when idle.
+function codexSeg(cwd) {
+  try {
+    const claudeDir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+    const base = path.join(claudeDir, 'plugins', 'data', 'codex-openai-codex', 'state');
+    let dirs;
+    try { dirs = fs.readdirSync(base); } catch (_) { return ''; }
+    let running = 0, oldest = Infinity;
+    for (const dir of dirs) {
+      let s;
+      try { s = JSON.parse(fs.readFileSync(path.join(base, dir, 'state.json'), 'utf8')); }
+      catch (_) { continue; }
+      for (const j of Object.values((s && s.jobs) || {})) {
+        if (j && j.status === 'running' && (!cwd || j.workspaceRoot === cwd)) {
+          if (pidAlive(j.pid) === false) continue; // stale running flag, process gone
+          running++;
+          const t = Date.parse(j.createdAt || j.startedAt || '');
+          if (!isNaN(t) && t < oldest) oldest = t;
+        }
+      }
+    }
+    if (running === 0) return '';
+    let el = '';
+    if (oldest !== Infinity) el = dim(` ${Math.floor((Date.now() - oldest) / 60000)}m`);
+    return yellow('⚙ codex' + (running > 1 ? ` ×${running}` : '')) + el;
+  } catch (_) { return ''; }
 }
 
 let raw = '';
@@ -115,6 +157,6 @@ process.stdin.on('end', () => {
   const clock = blue(`${hh}:${mm}`);
 
   const sep   = dim(' │ ');
-  const parts = [gitSeg, model && dim(model), ctxSeg, sessionSeg, ...rateParts, clock].filter(Boolean);
+  const parts = [gitSeg, codexSeg(cwd), model && dim(model), ctxSeg, sessionSeg, ...rateParts, clock].filter(Boolean);
   process.stdout.write(parts.join(sep));
 });
