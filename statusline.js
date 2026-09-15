@@ -30,7 +30,12 @@ function pidAlive(pid) {
   catch (e) { return e.code === 'EPERM'; } // EPERM = exists but not ours; ESRCH = dead
 }
 
-// Running Codex background jobs (from the codex plugin's per-workspace state.json).
+// Mirrors the plugin's own definition of an active job.
+function isActiveStatus(status) {
+  return status === 'queued' || status === 'running';
+}
+
+// Active Codex background jobs (from the codex plugin's per-workspace state.json).
 // Fast, best-effort, never throws — shows nothing when idle.
 function codexSeg(cwd) {
   try {
@@ -44,8 +49,8 @@ function codexSeg(cwd) {
       try { s = JSON.parse(fs.readFileSync(path.join(base, dir, 'state.json'), 'utf8')); }
       catch (_) { continue; }
       for (const j of Object.values((s && s.jobs) || {})) {
-        if (j && j.status === 'running' && (!cwd || j.workspaceRoot === cwd)) {
-          if (pidAlive(j.pid) === false) continue; // stale running flag, process gone
+        if (j && isActiveStatus(j.status) && (!cwd || j.workspaceRoot === cwd)) {
+          if (pidAlive(j.pid) === false) continue; // stale active job, process gone
           running++;
           const t = Date.parse(j.createdAt || j.startedAt || '');
           if (!isNaN(t) && t < oldest) oldest = t;
