@@ -21,6 +21,10 @@ No progress bars, no directory clutter — just the things you actually watch, c
 
 Rate-limit segments only appear once Claude Code has made its first API response in the session.
 
+## Codex jobs
+
+When Codex plugin jobs are active in the current workspace, the status line shows a yellow `⚙ codex`, an optional `×N` multiplier for multiple active jobs, and dimmed elapsed minutes since the oldest active job was created. It shows nothing when no job is active, and missing or unreadable plugin state never throws or breaks the status line. The state directory is read from `CLAUDE_CONFIG_DIR`, falling back to `~/.claude`; only jobs whose `workspaceRoot` matches the current workspace are counted. A job is active when the plugin recorded `queued` or `running`, matching the plugin's own definition, and each recorded `pid` is checked so jobs whose process is gone are skipped. This matters because the plugin does not always clear a job's status when it ends, so a stale record would otherwise pin the indicator on forever; it also makes the indicator a way to spot such a stuck job.
+
 ## Requirements
 
 - [Node.js](https://nodejs.org) on the machine (the script runs via `node`)
