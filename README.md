@@ -12,6 +12,7 @@ No progress bars, no directory clutter — just the things you actually watch, c
 | Segment | Meaning |
 |---------|---------|
 | `⎇ branch ●` | Git branch (cyan) + yellow `●` when the working tree is dirty |
+| `⚙ codex 3m` | Active Codex jobs in this workspace + elapsed time (see below) |
 | `Opus 4.8` | Active model |
 | `ctx 8% (16k/200k)` | Context window used — **green** < 70%, **yellow** 70–89%, **red** ≥ 90% |
 | `$0.42 5m12s +120/-8` | Session cost, duration, lines added/removed |
@@ -23,7 +24,18 @@ Rate-limit segments only appear once Claude Code has made its first API response
 
 ## Codex jobs
 
-When Codex plugin jobs are active in the current workspace, the status line shows a yellow `⚙ codex`, an optional `×N` multiplier for multiple active jobs, and dimmed elapsed minutes since the oldest active job was created. It shows nothing when no job is active, and missing or unreadable plugin state never throws or breaks the status line. The state directory is read from `CLAUDE_CONFIG_DIR`, falling back to `~/.claude`; only jobs whose `workspaceRoot` matches the current workspace are counted. A job is active when the plugin recorded `queued` or `running`, matching the plugin's own definition, and each recorded `pid` is checked so jobs whose process is gone are skipped. This matters because the plugin does not always clear a job's status when it ends, so a stale record would otherwise pin the indicator on forever; it also makes the indicator a way to spot such a stuck job.
+Shown only while the Codex plugin has jobs active in the
+current workspace — a yellow `⚙ codex`, a `×N` multiplier when more than one is active, and
+dimmed minutes since the oldest one started. Nothing is rendered when idle.
+
+- Scoped by `workspaceRoot`, so jobs from your other projects never show up here.
+- A job counts as active while the plugin records it `queued` or `running`, matching the
+  plugin's own definition of an active job.
+- Each job's recorded `pid` is checked and jobs whose process is gone are skipped. The plugin
+  does not reliably clear a job's status when it ends, so without this a stale record would
+  pin the indicator on forever — which also makes the indicator a way to spot a stuck job.
+- Plugin state is read from `CLAUDE_CONFIG_DIR`, falling back to `~/.claude`. Missing or
+  unreadable state renders nothing and never breaks the status line.
 
 ## Requirements
 
