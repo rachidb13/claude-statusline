@@ -24,7 +24,7 @@ Rate-limit segments only appear once Claude Code has made its first API response
 
 ## Codex jobs
 
-Shown only while the Codex plugin has jobs active in the
+Shown only while the [Codex plugin](https://github.com/openai/codex-plugin-cc) has jobs active in the
 current workspace — a yellow `⚙ codex`, a `×N` multiplier when more than one is active, and
 dimmed minutes since the oldest one started. Nothing is rendered when idle.
 
